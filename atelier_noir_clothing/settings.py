@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 import environ
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,7 +33,8 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG", default=False)
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default="127.0.0.1")
+ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default="localhost")
 
 CORS_ALLOW_ALL_ORIGINS = True
 
@@ -56,7 +58,16 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_yasg',
     'corsheaders',
+    'phonenumber_field',
+    'cart',
+    'favourites',
+    'orders',
+    'payments',
+    'products',
+    'users',
 ]
+
+AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -86,7 +97,27 @@ TEMPLATES = [
     },
 ]
 
+CHAPA_SECRET_KEY = "CHASECK_TEST-odnS9Tff2gUd0OdwC4CQPZcFA4HKgqWs"
+CHAPA_BASE_URL = "https://api.chapa.co/v1/transaction"
+
 WSGI_APPLICATION = 'atelier_noir_clothing.wsgi.application'
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',
+    )
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": False,
+    "UPDATE_LAST_LOGIN": False,
+}
 
 
 # Database
