@@ -1,3 +1,4 @@
+import json
 import requests
 from django.conf import settings
 from django.urls import reverse
@@ -20,7 +21,13 @@ from .utils import generate_order_number, create_plain_text_email
 def initiate_payment(request):
     """
     Start a payment with Chapa and return a checkout URL.
-    Body: { "order": <id>, "amount": <amount> }
+    To initiate a transaction, provide the order id thus in the post request body
+    Body: { "order": <id> }
+    Optionally, you can also provide:
+    1. email (or default to authenticated user email)
+    2. gateway (or default to paystack) [paystack or chapa]
+    3. phone_number (or default to authenticated user phone_number).
+    Same applies to first name and last name
     """
     order_id = request.data.get("order")
     
@@ -33,6 +40,7 @@ def initiate_payment(request):
         return Response({"error": f"This order has already been {order.status}"}, status=400)
     
     amount = order.total_amount
+    order_number = generate_order_number(order)
 
     try:
         email_from_data = request.data.get('email')
@@ -58,6 +66,7 @@ def initiate_payment(request):
     except:
         last_name = ""
 
+
     payment, created = Payment.objects.get_or_create(
         order=order,
         defaults={"amount": amount,
@@ -72,65 +81,116 @@ def initiate_payment(request):
         payment.payer_phone=phone_number
         payment.save()
 
-    headers = {
-        "Authorization": f"Bearer {settings.CHAPA_SECRET_KEY}",
+   
+    gateway = request.data.get('gateway')
+    if gateway == None: gateway = payment.gateway
+
+    if gateway.lower() == "chapa":
+        headers = {
+            "Authorization": f"Bearer {settings.CHAPA_SECRET_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        data = {
+            "amount": str(amount),
+            "currency": "USD",
+            "email": email,
+            "first_name": first_name,
+            "last_name": last_name,
+            "tx_ref": order_number,
+            "callback_url": request.build_absolute_uri(reverse("verify-payment")),
+            "customization": {
+                "title": "Order Payment",
+                "description": f"Payment for order {order.id}"
+            }
+        }
+
+        response = requests.post(f"{settings.CHAPA_BASE_URL}/initialize",
+                              json=data, headers=headers)
+        res_data = response.json()
+
+        if res_data.get("status") == "success":
+            payment.transaction_id = data["tx_ref"]
+            payment.save()
+            return Response({
+                "checkout_url": res_data["data"]["checkout_url"],
+                "payment": PaymentSerializer(payment).data
+            })
+        return Response(res_data, status=400)
+
+    paystack_headers = {
+        "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}",
         "Content-Type": "application/json"
     }
 
-    order_number = generate_order_number(order)
-
-    data = {
-        "amount": str(amount),
-        "currency": "USD",
+    paystack_payload = {
+        "amount": str(amount * 100),
+        "currency": "NGN",
         "email": email,
         "first_name": first_name,
         "last_name": last_name,
-        "tx_ref": order_number,
-        "callback_url": request.build_absolute_uri(reverse("verify-payment")),
-        "customization": {
+        "channels": ["card", "bank_transfer", "ussd", "bank", "qr", "mobile_money"],
+        "reference": order_number,
+        "callback_url": request.build_absolute_uri(reverse('verify-payment')),
+        "metadata": {
             "title": "Order Payment",
-            "description": f"Payment for order {order.id}"
-        }
+            "description": f"Payment for order {order_number}"
+        },
+        "label": f"Checkout for order {order_number}"
     }
 
-    response = requests.post(f"{settings.CHAPA_BASE_URL}/initialize",
-                              json=data, headers=headers)
-    res_data = response.json()
+    paystack_response = requests.post(
+        f"{settings.PAYSTACK_BASE_URL}/initialize",
+        headers=paystack_headers, 
+        data=json.dumps(paystack_payload)
+    )
 
-    print("res_data: ", res_data)
+    response_data = paystack_response.json()
 
-    if res_data.get("status") == "success":
-        payment.transaction_id = data["tx_ref"]
+    if response_data.get('status') == True:
+        payment.transaction_id = paystack_payload["reference"]
         payment.save()
         return Response({
-            "checkout_url": res_data["data"]["checkout_url"],
+            "checkout_url": response_data['data']['authorization_url'],
             "payment": PaymentSerializer(payment).data
         })
-    return Response(res_data, status=400)
+    else:
+        return False, "Failed to initiate payment, please try again later."
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def verify_payment(request):
     """
     Verify a payment with Chapa using tx_ref.
     Query param: ?trx_ref=<tx_ref>
     """
     trx_ref = request.query_params.get("trx_ref")
+    if trx_ref == None: trx_ref = request.query_params.get("reference")
+    
     if not trx_ref:
         return Response({"error": "trx_ref required"}, status=400)
-
-    headers = {"Authorization": f"Bearer {settings.CHAPA_SECRET_KEY}"}
-    response = requests.get(f"{settings.CHAPA_BASE_URL}/verify/{trx_ref}",
-                            headers=headers)
-    res_data = response.json()
 
     try:
         payment = Payment.objects.get(transaction_id=trx_ref)
     except Payment.DoesNotExist:
         return Response({"error": "Payment not found"}, status=404)
+    
+    gateway = payment.gateway
 
-    if res_data.get("status") == "success" and res_data["data"]["status"] == "success":
+    if gateway == "chapa":
+        headers = {"Authorization": f"Bearer {settings.CHAPA_SECRET_KEY}"}
+        response = requests.get(f"{settings.CHAPA_BASE_URL}/verify/{trx_ref}",
+                                headers=headers)
+        res_data = response.json()
+
+    headers = {"Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}"}
+    response = requests.get(f"{settings.PAYSTACK_BASE_URL}/verify/{trx_ref}",
+                            headers=headers)
+    res_data = response.json()
+
+
+    if (res_data.get("status") == "success" and res_data["data"]["status"] == "success") or res_data.get("status") == True:
         with transaction.atomic():
             payment.status = "successful"
             payment.save()
@@ -138,16 +198,6 @@ def verify_payment(request):
             try:
                 send_mail(
                     subject='Your order has been confirmed and paid for!',
-                    # message=f"""
-                    # This mail is to confirm you have successfully paid for your order 
-                    # on our website.
-                    # \n\nBelow are the details of your order:\n\n
-                    # Order no: {payment.booking_reference}\n
-                    # Amount paid: ${payment.amount}\n
-                    # Customer name: {payment.payer.username}\n
-                    # Date paid: {payment.updated_at.strftime("%Y-%m-%d %I:%M %p") }\n
-                    # Expect your order to be delivered in 2 to 3 business days\n
-                    # """,
                     message=create_plain_text_email(payment),
                     from_email=settings.EMAIL_HOST_USER,
                     recipient_list=[payment.payer_email],

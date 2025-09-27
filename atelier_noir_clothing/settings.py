@@ -35,8 +35,9 @@ SECRET_KEY = env('SECRET_KEY')
 # DEBUG = env.bool("DEBUG", default=False)
 DEBUG = False
 
-ALLOWED_HOSTS = ["*"]
-# ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default="localhost")
+# ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS = env("ALLOWED_HOSTS").split(",")
+ALLOWED_HOSTS = ["0.0.0.0", "127.0.0.1", "localhost", "atelier-noir-jb17.onrender.com", "atelier-noir-1.onrender.com"]
 
 CORS_ALLOW_ALL_ORIGINS = True
 
@@ -216,7 +217,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
@@ -232,3 +233,9 @@ EMAIL_USE_SSL = False
 EMAIL_HOST_USER = "nonsowisdom62@gmail.com"
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASS')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+CHAPA_SECRET_KEY = env("CHAPA_SECRET_KEY")
+CHAPA_BASE_URL = env("CHAPA_BASE_URL")
+
+PAYSTACK_SECRET_KEY = env("PAYSTACK_SECRET_KEY")
+PAYSTACK_BASE_URL = env("PAYSTACK_BASE_URL")

@@ -1,1 +1,4 @@
 processes.md
+paystack.paystack
+.env
+db.sqlite3

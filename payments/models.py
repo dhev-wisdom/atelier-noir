@@ -8,6 +8,11 @@ PAYMENT_METHODS = (
     ("bankTransfer", "BankTransfer"),
 )
 
+PAYMENT_GATEWAY = (
+    ("paystack", "Paystack"),
+    ("chapa", "Chapa"),
+)
+
 PAYMENT_STATUS = (
     ("pending", "Pending"),
     ("successful", "Successful"),
@@ -35,9 +40,10 @@ class Payment(models.Model):
     amount = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
     status = models.CharField(max_length=15, choices=PAYMENT_STATUS, default="pending")
     payment_method = models.CharField(max_length=15, choices=PAYMENT_METHODS, default="card")
+    gateway = models.CharField(max_length=15, choices=PAYMENT_GATEWAY, default="paystack")
     transaction_id = models.CharField(max_length=100, null=True, blank=True, unique=True)
     booking_reference = models.UUIDField(default=uuid4, unique=True, editable=False)
-    currency = models.CharField(max_length=10, choices=CURRENCIES, default="usd")
+    currency = models.CharField(max_length=10, choices=CURRENCIES, default="ngn")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
