@@ -19,6 +19,6 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["gunicorn", "atelier_noir_clothing.wsgi.application", "--bind", "-k", "uvicorn.workers.UvicornWorker"]
+CMD ["gunicorn", "atelier_noir_clothing.wsgi.application", "--bind", "0.0.0.0:8000"]
 
 # CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
