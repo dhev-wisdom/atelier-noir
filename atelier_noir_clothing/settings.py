@@ -39,6 +39,34 @@ ALLOWED_HOSTS = ["*"]
 
 CORS_ALLOW_ALL_ORIGINS = True
 
+# For development, you can use this (less secure):
+# CORS_ALLOW_ALL_ORIGINS = True  # Only for development!
+
+# Headers that your frontend can send
+CORS_ALLOWED_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# Methods allowed
+CORS_ALLOWED_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# If you're using cookies/sessions for auth
+CORS_ALLOW_CREDENTIALS = True
+
 '''
 CORS_ALLOWED_ORIGINS = [
     "https://example.com",
