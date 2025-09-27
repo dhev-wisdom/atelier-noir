@@ -32,7 +32,8 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool("DEBUG", default=False)
+# DEBUG = env.bool("DEBUG", default=False)
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 # ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default="localhost")
@@ -103,6 +104,7 @@ AUTH_USER_MODEL = 'users.User'
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -127,9 +129,6 @@ TEMPLATES = [
         },
     },
 ]
-
-CHAPA_SECRET_KEY = "CHASECK_TEST-odnS9Tff2gUd0OdwC4CQPZcFA4HKgqWs"
-CHAPA_BASE_URL = "https://api.chapa.co/v1/transaction"
 
 WSGI_APPLICATION = 'atelier_noir_clothing.wsgi.application'
 
