@@ -3,6 +3,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.db import transaction
 from django.shortcuts import get_object_or_404
+from django.core.mail import send_mail
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -10,11 +11,12 @@ from .models import Payment
 from orders.models import Order
 from .serializers import PaymentSerializer
 from django_ratelimit.decorators import ratelimit
+from .utils import generate_order_number, create_plain_text_email
 
 
 @ratelimit(key="user_or_ip", rate="5/m", block=True)
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def initiate_payment(request):
     """
     Start a payment with Chapa and return a checkout URL.
@@ -75,13 +77,15 @@ def initiate_payment(request):
         "Content-Type": "application/json"
     }
 
+    order_number = generate_order_number(order)
+
     data = {
         "amount": str(amount),
         "currency": "USD",
         "email": email,
         "first_name": first_name,
         "last_name": last_name,
-        "tx_ref": str(payment.booking_reference),
+        "tx_ref": order_number,
         "callback_url": request.build_absolute_uri(reverse("verify-payment")),
         "customization": {
             "title": "Order Payment",
@@ -106,7 +110,7 @@ def initiate_payment(request):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def verify_payment(request):
     """
     Verify a payment with Chapa using tx_ref.
@@ -115,8 +119,6 @@ def verify_payment(request):
     trx_ref = request.query_params.get("trx_ref")
     if not trx_ref:
         return Response({"error": "trx_ref required"}, status=400)
-    
-    print("Road block 2")
 
     headers = {"Authorization": f"Bearer {settings.CHAPA_SECRET_KEY}"}
     response = requests.get(f"{settings.CHAPA_BASE_URL}/verify/{trx_ref}",
@@ -132,6 +134,29 @@ def verify_payment(request):
         with transaction.atomic():
             payment.status = "successful"
             payment.save()
+
+            try:
+                send_mail(
+                    subject='Your order has been confirmed and paid for!',
+                    # message=f"""
+                    # This mail is to confirm you have successfully paid for your order 
+                    # on our website.
+                    # \n\nBelow are the details of your order:\n\n
+                    # Order no: {payment.booking_reference}\n
+                    # Amount paid: ${payment.amount}\n
+                    # Customer name: {payment.payer.username}\n
+                    # Date paid: {payment.updated_at.strftime("%Y-%m-%d %I:%M %p") }\n
+                    # Expect your order to be delivered in 2 to 3 business days\n
+                    # """,
+                    message=create_plain_text_email(payment),
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=[payment.payer_email],
+                )
+            
+            except:
+                return Response({"message": "Kindly login to complete your payment"})
+            
+
 
             if hasattr(payment, "order") and payment.order:
                 payment.order.status = "paid"

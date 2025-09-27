@@ -1,6 +1,11 @@
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
+from users.models import User
 
 # Create your models here.
+
+def image_upload_path(instance, filename):
+    return f"products/{instance.product.id}/{filename}"
 
 class Category(models.Model):
     """
@@ -46,3 +51,37 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ProductImage(models.Model):
+    """
+    Model to facilate adding images to products
+    """
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
+    images = models.ImageField(upload_to=image_upload_path)
+    is_main = models.BooleanField(default=False)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.product.name}-image-{self.id} - {('Main' if self.is_main else 'Image')}"
+    
+
+class Review(models.Model):
+    """
+    Model to store customers reviews for products
+    """
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="reviews")
+    customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reviews")
+    rating = models.PositiveSmallIntegerField(default=5, validators=[MinValueValidator(1), MaxValueValidator(5)])
+    review_title = models.CharField(max_length=50, null=True, blank=True)
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Review for {self.product.name} - {self.id}"
+    

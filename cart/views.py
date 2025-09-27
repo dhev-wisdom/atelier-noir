@@ -8,13 +8,13 @@ class CartViewset(viewsets.ModelViewSet):
     """Manage cart"""
     queryset = Cart.objects.all()
     serializer_class = CartSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
 
 class CartItemViewset(viewsets.ModelViewSet):
     """Manage items in a cart"""
     serializer_class = CartItemSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return CartItem.objects.filter(cart_id=self.kwargs['cart_pk'])

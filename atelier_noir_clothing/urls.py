@@ -21,9 +21,8 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
-import products.urls
-import orders.urls
-import users.urls
+from django.conf import settings
+from django.conf.urls.static import static
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -50,4 +49,9 @@ urlpatterns = [
     path('api/', include("favourites.urls")),
     path('api/', include("cart.urls")),
     path('api/payments/', include("payments.urls")),
+    path('api/contact/', include("Contact.urls")),
+    path('api/blog/', include("Blog.urls")),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

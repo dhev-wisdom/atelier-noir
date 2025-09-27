@@ -65,6 +65,8 @@ INSTALLED_APPS = [
     'payments',
     'products',
     'users',
+    'Blog',
+    'Contact'
 ]
 
 AUTH_USER_MODEL = 'users.User'
@@ -118,6 +120,9 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": False,
     "UPDATE_LAST_LOGIN": False,
 }
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 
 # Database
@@ -178,7 +183,19 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False 
+EMAIL_HOST_USER = "nonsowisdom62@gmail.com"
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASS')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
