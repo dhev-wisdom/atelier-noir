@@ -13,7 +13,12 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
+RUN pip install gunicorn
 
 COPY . .
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+EXPOSE 8000
+
+CMD ["gunicorn", "your_project_name.wsgi:application", "--bind", "0.0.0.0:$PORT"]
+
+# CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
