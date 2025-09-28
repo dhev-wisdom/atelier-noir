@@ -166,20 +166,20 @@ MEDIA_ROOT = BASE_DIR / "media"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 
-# DATABASES = {
-#     "default": dj_database_url.config(default=os.environ.get("DATABASE_URL"))
-# }
-
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('POSTGRES_DB'),
-        'USER': env('POSTGRES_USER'),
-        'PASSWORD': env('POSTGRES_PASSWORD'),
-        'HOST': 'db',   # service name in docker-compose.yml
-        'PORT': 5432,
-    }
+    "default": dj_database_url.config(default=os.environ.get("DATABASE_URL"))
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': env('POSTGRES_DB'),
+#         'USER': env('POSTGRES_USER'),
+#         'PASSWORD': env('POSTGRES_PASSWORD'),
+#         'HOST': 'db',   # service name in docker-compose.yml
+#         'PORT': 5432,
+#     }
+# }
 
 # DATABASES = {
 #     'default': {
