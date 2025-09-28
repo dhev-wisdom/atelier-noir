@@ -40,7 +40,7 @@ class ProductSerializer(serializers.ModelSerializer):
         return obj.original_price * (1 - (obj.discount/100))
     
     def get_main_image(self, obj):
-        main = obj.product_images.filter(is_main=True).first()
+        main = obj.images.filter(is_main=True).first()
         return main.images.url if main and main.images else None
     
 
