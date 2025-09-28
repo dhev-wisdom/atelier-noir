@@ -8,7 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.decorators import permission_classes
 from .filters import ProductFilter
-from django_filters.rest_framework import DjangoFilterBackend
+# from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 
@@ -19,12 +19,13 @@ class ProductViewSet(viewsets.ModelViewSet):
     """
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticated]
-    queryset = Product.objects.all().annotate(
-        rating=Avg('reviews__rating')
-    )
-    ordering_fields = ['rating', 'price', 'created_at']
-    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
-    filterset_class = ProductFilter
+    # queryset = Product.objects.all().annotate(
+    #     rating=Avg('reviews__rating')
+    # )
+    queryset = Product.objects.all()
+    # ordering_fields = ['rating', 'price', 'created_at']
+    # filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
+    # filterset_class = ProductFilter
     search_fields = ['name', 'description']
 
     @action(detail=True, methods=['get'])

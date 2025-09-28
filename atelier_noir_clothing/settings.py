@@ -158,17 +158,17 @@ SIMPLE_JWT = {
 #     }
 # }
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {'class': 'logging.StreamHandler'},
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'ERROR',   # change to DEBUG temporarily
-    },
-}
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'console': {'class': 'logging.StreamHandler'},
+#     },
+#     'root': {
+#         'handlers': ['console'],
+#         'level': 'ERROR',   # change to DEBUG temporarily
+#     },
+# }
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
