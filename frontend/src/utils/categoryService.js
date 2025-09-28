@@ -24,7 +24,7 @@ const CategoryService = {
   // Get featured categories
   getFeaturedCategories: async () => {
     try {
-      const response = await api.get('/categories/featured/');
+      const response = await api.get('/categories/?limit=5');
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch featured categories' };

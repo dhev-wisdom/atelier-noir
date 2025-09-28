@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useWishlist } from '../contexts/WishlistContext';
+import { useSavedItems } from '../contexts/SavedItemsContext';
 import CategoryService from '../utils/categoryService';
 
 const Navigation = () => {
@@ -11,6 +12,7 @@ const Navigation = () => {
     const { currentUser, logout, isAuthenticated } = useAuth();
     const { getCartItemsCount } = useCart();
     const { getWishlistCount } = useWishlist();
+    const { getSavedItemsCount } = useSavedItems();
 
     useEffect(() => {
         fetchCategories();
@@ -82,13 +84,6 @@ const Navigation = () => {
                             <nav className="header__menu">
                                 <ul>
                                     <li className="active"><Link to="/">Home</Link></li>
-                                    {categories.slice(0, 4).map(category => (
-                                        <li key={category.id}>
-                                            <Link to={`/category/${category.slug || category.id}`}>
-                                                {category.name}
-                                            </Link>
-                                        </li>
-                                    ))}
                                     <li><Link to="/category">Shop</Link>
                                         <ul className="dropdown">
                                             <li><Link to="/category">All Products</Link></li>
@@ -123,6 +118,11 @@ const Navigation = () => {
                                 </div>
                                 <ul className="header__right__widget">
                                     <li><span className="icon_search search-switch"></span></li>
+                                    {isAuthenticated && (
+                                        <li><Link to="/saved-items"><span className="icon_bookmark_alt"></span>
+                                            <div className="tip">{getSavedItemsCount()}</div>
+                                        </Link></li>
+                                    )}
                                     <li><Link to="/wishlist"><span className="icon_heart_alt"></span>
                                         <div className="tip">{getWishlistCount()}</div>
                                     </Link></li>

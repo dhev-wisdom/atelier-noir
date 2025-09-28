@@ -4,6 +4,7 @@ import ProductService from '../utils/productService';
 import CategoryService from '../utils/categoryService';
 import { useCart } from '../contexts/CartContext';
 import { useWishlist } from '../contexts/WishlistContext';
+import { useSavedItems } from '../contexts/SavedItemsContext';
 
 const Category = () => {
     const { id } = useParams();
@@ -20,12 +21,30 @@ const Category = () => {
     const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
     const [addingToCart, setAddingToCart] = useState({});
     const [addingToWishlist, setAddingToWishlist] = useState({});
+    const [addingToSavedItems, setAddingToSavedItems] = useState({});
 
     // Cart context
     const { addToCart, isInCart } = useCart();
     
     // Wishlist context
     const { addToWishlist: addProductToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+    
+    // SavedItems context
+    const { addToSavedItems, removeFromSavedItems, isInSavedItems } = useSavedItems();
+
+    // Helper function to fetch product images
+    const fetchProductWithImages = async (product) => {
+        try {
+            const mainImage = await ProductService.getMainProductImage(product.id);
+            return {
+                ...product,
+                mainImage: mainImage?.image || null
+            };
+        } catch (error) {
+            console.warn(`Failed to fetch images for product ${product.id}:`, error);
+            return product;
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -37,6 +56,7 @@ const Category = () => {
                 const categoriesResponse = await CategoryService.getAllCategories();
                 setCategories(categoriesResponse.data || []);
 
+                let productsData = [];
                 // If category ID is provided, fetch category details and products
                 if (id) {
                     const categoryResponse = await CategoryService.getCategoryById(id);
@@ -44,15 +64,22 @@ const Category = () => {
                     
                     // Fetch products by category
                     const productsResponse = await ProductService.getProductsByCategory(id);
-                    setProducts(productsResponse.data || []);
+                    productsData = productsResponse.data || [];
                     
                     document.title = `${categoryResponse.data?.name || 'Category'} | Atelier Noir`;
                 } else {
                     // Fetch all products if no category specified
                     const productsResponse = await ProductService.getAllProducts();
-                    setProducts(productsResponse.data || []);
+                    productsData = productsResponse.data || [];
                     document.title = "Shop All | Atelier Noir";
                 }
+
+                // Fetch images for each product
+                const productsWithImages = await Promise.all(
+                    productsData.map(fetchProductWithImages)
+                );
+                
+                setProducts(productsWithImages);
             } catch (err) {
                 console.error('Error fetching data:', err);
                 setError('Failed to load products. Please try again.');
@@ -185,6 +212,30 @@ const Category = () => {
             console.error('Failed to update wishlist:', error);
         } finally {
             setAddingToWishlist(prev => ({ ...prev, [product.id]: false }));
+        }
+    };
+
+    // Handle saved items toggle
+    const handleSavedItemsToggle = async (product, e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        try {
+            setAddingToSavedItems(prev => ({ ...prev, [product.id]: true }));
+            
+            const inSavedItems = isInSavedItems(product.id);
+            
+            if (inSavedItems) {
+                await removeFromSavedItems(product.id);
+                console.log('Product removed from saved items');
+            } else {
+                await addToSavedItems(product);
+                console.log('Product saved for later');
+            }
+        } catch (error) {
+            console.error('Failed to update saved items:', error);
+        } finally {
+            setAddingToSavedItems(prev => ({ ...prev, [product.id]: false }));
         }
     };
 
@@ -469,7 +520,7 @@ const Category = () => {
                                                 } : {}}>
                                                 <div className="product__item__pic set-bg" 
                                                     style={{ 
-                                                        backgroundImage: `url('${product.image || '/src/assets/img/product/product-1.jpg'}')`,
+                                                        backgroundImage: `url('${product.mainImage || product.image || '/src/assets/img/product/product-1.jpg'}')`,
                                                         ...(viewMode === 'list' ? {
                                                             width: '200px',
                                                             height: '200px',
@@ -497,6 +548,21 @@ const Category = () => {
                                                             >
                                                                 <img src="/src/assets/img/icon/heart.png" alt="" />
                                                                 {addingToWishlist[product.id] && <span className="fa fa-spinner fa-spin" style={{ marginLeft: '5px' }}></span>}
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a 
+                                                                href="#" 
+                                                                onClick={(e) => handleSavedItemsToggle(product, e)}
+                                                                style={{ 
+                                                                    opacity: addingToSavedItems[product.id] ? 0.6 : 1,
+                                                                    pointerEvents: addingToSavedItems[product.id] ? 'none' : 'auto',
+                                                                    color: isInSavedItems(product.id) ? '#007bff' : '#333'
+                                                                }}
+                                                                title={isInSavedItems(product.id) ? 'Remove from saved items' : 'Save for later'}
+                                                            >
+                                                                <img src="/src/assets/img/icon/bookmark.png" alt="" />
+                                                                {addingToSavedItems[product.id] && <span className="fa fa-spinner fa-spin" style={{ marginLeft: '5px' }}></span>}
                                                             </a>
                                                         </li>
                                                         <li><a href="#"><img src="/src/assets/img/icon/compare.png" alt="" /> <span>Compare</span></a></li>
@@ -618,6 +684,27 @@ const Category = () => {
                                                                 ) : (
                                                                     <>
                                                                         <i className="fa fa-heart"></i> {isInWishlist(product.id) ? 'Remove' : 'Wishlist'}
+                                                                    </>
+                                                                )}
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => handleSavedItemsToggle(product, e)}
+                                                                className={`btn ${isInSavedItems(product.id) ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                                disabled={addingToSavedItems[product.id]}
+                                                                style={{
+                                                                    padding: '8px 16px',
+                                                                    fontSize: '14px',
+                                                                    opacity: addingToSavedItems[product.id] ? 0.6 : 1
+                                                                }}
+                                                                title={isInSavedItems(product.id) ? 'Remove from saved items' : 'Save for later'}
+                                                            >
+                                                                {addingToSavedItems[product.id] ? (
+                                                                    <>
+                                                                        <span className="fa fa-spinner fa-spin"></span> {isInSavedItems(product.id) ? 'Removing...' : 'Saving...'}
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <i className="fa fa-bookmark"></i> {isInSavedItems(product.id) ? 'Remove' : 'Save'}
                                                                     </>
                                                                 )}
                                                             </button>

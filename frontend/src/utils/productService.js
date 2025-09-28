@@ -5,6 +5,7 @@ const ProductService = {
   getAllProducts: async (page = 1, limit = 10) => {
     try {
       const response = await api.get(`/products/?page=${page}&limit=${limit}`);
+      console.log("From productservice getALlProducts: ", response);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch products' };
@@ -64,7 +65,7 @@ const ProductService = {
   // Search products
   searchProducts: async (query, page = 1, limit = 10) => {
     try {
-      const response = await api.get(`/products/search/?query=${query}&page=${page}&limit=${limit}`);
+      const response = await api.get(`/products/?search=${query}&page=${page}&limit=${limit}`);
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to search products' };
@@ -88,6 +89,27 @@ const ProductService = {
       return response.data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to add review' };
+    }
+  },
+
+  // Get product images
+  getProductImages: async (productId) => {
+    try {
+      const response = await api.get(`/products/${productId}/images/`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch product images' };
+    }
+  },
+
+  // Get main product image
+  getMainProductImage: async (productId) => {
+    try {
+      const images = await ProductService.getProductImages(productId);
+      const mainImage = images.find(image => image.is_main);
+      return mainImage || (images.length > 0 ? images[0] : null);
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch main product image' };
     }
   }
 };

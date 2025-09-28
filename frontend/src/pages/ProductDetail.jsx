@@ -46,6 +46,18 @@ const ProductDetail = () => {
             
             // Fetch product details
             const productData = await ProductService.getProductById(id);
+            
+            // Fetch product images
+            try {
+                const productImages = await ProductService.getProductImages(id);
+                productData.images = productImages;
+                productData.mainImage = await ProductService.getMainProductImage(id);
+            } catch (imageError) {
+                console.warn('Failed to fetch product images:', imageError);
+                productData.images = [];
+                productData.mainImage = null;
+            }
+            
             setProduct(productData);
             
             // Update document title
@@ -79,8 +91,9 @@ const ProductDetail = () => {
     const fetchProductReviews = async () => {
         try {
             setReviewsLoading(true);
+            // Use the new reviews endpoint
             const reviewsData = await ProductService.getProductReviews(id);
-            setReviews(reviewsData.results || []);
+            setReviews(reviewsData || []);
         } catch (err) {
             console.warn('Failed to fetch reviews:', err);
             setReviews([]);
@@ -269,7 +282,7 @@ const ProductDetail = () => {
     // Get product images (fallback to placeholder if none available)
     const productImages = product.images && product.images.length > 0 
         ? product.images 
-        : [{ image: '/src/assets/img/product/product-1.jpg', alt: product.name }];
+        : [{ image: product.mainImage || '/src/assets/img/product/product-1.jpg', alt: product.name }];
 
     return (
         <>
@@ -423,6 +436,23 @@ const ProductDetail = () => {
                                                 title={isInWishlist(product?.id) ? 'Remove from wishlist' : 'Add to wishlist'}
                                             >
                                                 <span className="icon_heart_alt"></span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a 
+                                                href="#" 
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    handleSavedItemsToggle();
+                                                }}
+                                                style={{
+                                                    opacity: addingToSavedItems ? 0.6 : 1,
+                                                    cursor: addingToSavedItems ? 'not-allowed' : 'pointer',
+                                                    color: isInSavedItems(product?.id) ? '#007bff' : '#333'
+                                                }}
+                                                title={isInSavedItems(product?.id) ? 'Remove from saved items' : 'Save for later'}
+                                            >
+                                                <span className="icon_bookmark_alt"></span>
                                             </a>
                                         </li>
                                         <li><a href="#"><span className="icon_adjust-horiz"></span></a></li>
@@ -735,7 +765,7 @@ const ProductDetail = () => {
                                     <div className="product__item">
                                         <div className="product__item__pic set-bg" 
                                             style={{ 
-                                                backgroundImage: `url(${relatedProduct.image || '/src/assets/img/product/product-1.jpg'})`,
+                                                backgroundImage: `url(${relatedProduct.mainImage || relatedProduct.image || '/src/assets/img/product/product-1.jpg'})`,
                                                 height: '250px',
                                                 backgroundSize: 'cover',
                                                 backgroundPosition: 'center'

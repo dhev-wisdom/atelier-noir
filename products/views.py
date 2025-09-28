@@ -3,10 +3,14 @@ from django.db.models import Sum, Count
 from django.utils.timezone import now, timedelta
 from .models import Product, Category, ProductImage, Review
 from .serializers import ProductSerializer, CategorySerializer, ProductImageSerializer, ReviewSerializer
-from rest_framework import permissions, viewsets, views
+from rest_framework import permissions, viewsets, views, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.decorators import permission_classes
+from .filters import ProductFilter
+from django_filters.rest_framework import DjangoFilterBackend
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
 
 # Create your views here.
 class ProductViewSet(viewsets.ModelViewSet):
@@ -16,6 +20,10 @@ class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticated]
     queryset = Product.objects.all()
+    ordering_fields = ['rating', 'price', 'created_at']
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
+    filterset_class = ProductFilter
+    search_fields = ['name', 'description']
 
     @action(detail=True, methods=['get'])
     def related(self, request, pk=None):
@@ -25,6 +33,14 @@ class ProductViewSet(viewsets.ModelViewSet):
         ).exclude(id=product.id).order_by('?')[:4]
         serializer = ProductSerializer(related, many=True, context={'request': request})
         return Response(serializer.data)
+    
+    @method_decorator(cache_page(60 * 60 * 24))   # cache for 5 minutes
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @method_decorator(cache_page(60 * 60 * 24))
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
 
 
 @permission_classes([permissions.IsAuthenticated])

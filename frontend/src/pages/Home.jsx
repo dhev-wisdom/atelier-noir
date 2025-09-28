@@ -4,6 +4,7 @@ import ProductService from '../utils/productService';
 import CategoryService from '../utils/categoryService';
 import { useCart } from '../contexts/CartContext';
 import { useWishlist } from '../contexts/WishlistContext';
+import { useSavedItems } from '../contexts/SavedItemsContext';
 
 const Home = () => {
     const [products, setProducts] = useState([]);
@@ -17,12 +18,30 @@ const Home = () => {
     const [activeFilter, setActiveFilter] = useState('*');
     const [addingToCart, setAddingToCart] = useState({});
     const [addingToWishlist, setAddingToWishlist] = useState({});
+    const [addingToSavedItems, setAddingToSavedItems] = useState({});
 
     // Cart context
     const { addToCart, isInCart } = useCart();
     
     // Wishlist context
     const { addToWishlist: addProductToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+    
+    // SavedItems context
+    const { addToSavedItems, removeFromSavedItems, isInSavedItems } = useSavedItems();
+
+    // Helper function to fetch product images
+    const fetchProductWithImages = async (product) => {
+        try {
+            const mainImage = await ProductService.getMainProductImage(product.id);
+            return {
+                ...product,
+                mainImage: mainImage?.image || null
+            };
+        } catch (error) {
+            console.warn(`Failed to fetch images for product ${product.id}:`, error);
+            return product;
+        }
+    };
 
     useEffect(() => {
         // Set document title
@@ -37,7 +56,12 @@ const Home = () => {
                     CategoryService.getAllCategories()
                 ]);
                 
-                setProducts(productsData.results || []);
+                // Fetch images for each product
+                const productsWithImages = await Promise.all(
+                    (productsData.results || []).map(fetchProductWithImages)
+                );
+                
+                setProducts(productsWithImages);
                 setCategories(categoriesData.results || []);
                 setLoading(false);
             } catch (err) {
@@ -104,13 +128,20 @@ const Home = () => {
                     }
                 }
                 
-                setTrendingProducts(trendingData.results || []);
-                setBestSellersProducts(bestSellersData.results || []);
-                setFeaturedProducts(featuredData.results || []);
+                // Fetch images for trending, best sellers, and featured products
+                const [trendingWithImages, bestSellersWithImages, featuredWithImages] = await Promise.all([
+                    Promise.all((trendingData.results || []).map(fetchProductWithImages)),
+                    Promise.all((bestSellersData.results || []).map(fetchProductWithImages)),
+                    Promise.all((featuredData.results || []).map(fetchProductWithImages))
+                ]);
                 
-                console.log('Final trending state:', trendingData.results || []);
-                console.log('Final best sellers state:', bestSellersData.results || []);
-                console.log('Final featured state:', featuredData.results || []);
+                setTrendingProducts(trendingWithImages);
+                setBestSellersProducts(bestSellersWithImages);
+                setFeaturedProducts(featuredWithImages);
+                
+                console.log('Final trending state:', trendingWithImages);
+                console.log('Final best sellers state:', bestSellersWithImages);
+                console.log('Final featured state:', featuredWithImages);
                 
                 setTrendLoading(false);
             } catch (err) {
@@ -169,6 +200,30 @@ const Home = () => {
         }
     };
 
+    // Handle saved items toggle
+    const handleSavedItemsToggle = async (product, e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        try {
+            setAddingToSavedItems(prev => ({ ...prev, [product.id]: true }));
+            
+            const inSavedItems = isInSavedItems(product.id);
+            
+            if (inSavedItems) {
+                await removeFromSavedItems(product.id);
+                console.log('Product removed from saved items');
+            } else {
+                await addToSavedItems(product);
+                console.log('Product saved for later');
+            }
+        } catch (error) {
+            console.error('Failed to update saved items:', error);
+        } finally {
+            setAddingToSavedItems(prev => ({ ...prev, [product.id]: false }));
+        }
+    };
+
     // Filter products based on active filter
     const filteredProducts = activeFilter === '*' 
         ? products 
@@ -187,7 +242,7 @@ const Home = () => {
             <div key={product?.id || `${fallbackPrefix}-${index}`} className="trend__item">
                 <div className="trend__item__pic">
                     <img 
-                        src={product?.image || fallbackImage} 
+                        src={product?.mainImage || product?.image || fallbackImage} 
                         alt={product?.name || fallbackName}
                         onError={(e) => {
                             e.target.src = fallbackImage;
@@ -389,11 +444,11 @@ const Home = () => {
                                 <div key={product.id} className={`col-lg-3 col-md-4 col-sm-6 mix ${product.category ? product.category.name.toLowerCase() : ''}`}>
                                     <div className="product__item">
                                         <div className="product__item__pic set-bg" 
-                                            style={{ backgroundImage: `url('${product.image || '/src/assets/img/product/product-1.jpg'}')` }}>
+                                            style={{ backgroundImage: `url('${product.mainImage || product.image || '/src/assets/img/product/product-1.jpg'}')` }}>
                                             {product.is_new && <div className="label new">New</div>}
                                             {product.is_sale && <div className="label sale">Sale</div>}
                                             <ul className="product__hover">
-                                                <li><a href={product.image || '/src/assets/img/product/product-1.jpg'} className="image-popup"><span className="arrow_expand"></span></a></li>
+                                                <li><a href={product.mainImage || product.image || '/src/assets/img/product/product-1.jpg'} className="image-popup"><span className="arrow_expand"></span></a></li>
                                                 <li>
                                                     <a 
                                                         href="#" 
@@ -406,6 +461,20 @@ const Home = () => {
                                                         title={isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
                                                     >
                                                         <span className={addingToWishlist[product.id] ? "fa fa-spinner fa-spin" : "icon_heart_alt"}></span>
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a 
+                                                        href="#" 
+                                                        onClick={(e) => handleSavedItemsToggle(product, e)}
+                                                        style={{ 
+                                                            opacity: addingToSavedItems[product.id] ? 0.6 : 1,
+                                                            pointerEvents: addingToSavedItems[product.id] ? 'none' : 'auto',
+                                                            color: isInSavedItems(product.id) ? '#007bff' : '#333'
+                                                        }}
+                                                        title={isInSavedItems(product.id) ? 'Remove from saved items' : 'Save for later'}
+                                                    >
+                                                        <span className={addingToSavedItems[product.id] ? "fa fa-spinner fa-spin" : "icon_bookmark_alt"}></span>
                                                     </a>
                                                 </li>
                                                 <li>
