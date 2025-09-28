@@ -34,13 +34,13 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = ProductSerializer(related, many=True, context={'request': request})
         return Response(serializer.data)
     
-    @method_decorator(cache_page(60 * 60 * 24))   # cache for 5 minutes
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
+    # @method_decorator(cache_page(60 * 60 * 24))
+    # def list(self, request, *args, **kwargs):
+    #     return super().list(request, *args, **kwargs)
 
-    @method_decorator(cache_page(60 * 60 * 24))
-    def retrieve(self, request, *args, **kwargs):
-        return super().retrieve(request, *args, **kwargs)
+    # @method_decorator(cache_page(60 * 60 * 24))
+    # def retrieve(self, request, *args, **kwargs):
+    #     return super().retrieve(request, *args, **kwargs)
 
 
 @permission_classes([permissions.IsAuthenticated])

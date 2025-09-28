@@ -29,20 +29,6 @@ const Home = () => {
     // SavedItems context
     const { addToSavedItems, removeFromSavedItems, isInSavedItems } = useSavedItems();
 
-    // Helper function to fetch product images
-    const fetchProductWithImages = async (product) => {
-        try {
-            const mainImage = await ProductService.getMainProductImage(product.id);
-            return {
-                ...product,
-                mainImage: mainImage?.image || null
-            };
-        } catch (error) {
-            console.warn(`Failed to fetch images for product ${product.id}:`, error);
-            return product;
-        }
-    };
-
     useEffect(() => {
         // Set document title
         document.title = "Atelier Noir | Home";
@@ -51,101 +37,41 @@ const Home = () => {
         const fetchMainData = async () => {
             try {
                 setLoading(true);
-                const [productsData, categoriesData] = await Promise.all([
-                    ProductService.getAllProducts(1, 8),
-                    CategoryService.getAllCategories()
-                ]);
+                // TEMPORARILY TESTING ONLY CATEGORIES API
+                const categoriesData = await CategoryService.getAllCategories();
+                console.log('Categories API response:', categoriesData);
                 
-                // Fetch images for each product
-                const productsWithImages = await Promise.all(
-                    (productsData.results || []).map(fetchProductWithImages)
-                );
-                
-                setProducts(productsWithImages);
                 setCategories(categoriesData.results || []);
+                // Temporarily set empty arrays for other data
+                setProducts([]);
                 setLoading(false);
             } catch (err) {
-                console.error('Error fetching main data:', err);
-                setError('Failed to load products. Please try again later.');
+                console.error('Error fetching categories:', err);
+                setError('Failed to load categories. Please try again later.');
                 setLoading(false);
             }
         };
 
-        // Fetch trending data
+        // TEST PRODUCTS API CALL
         const fetchTrendingData = async () => {
             try {
                 setTrendLoading(true);
-                console.log('Fetching trending data...');
+                console.log('Testing products API call...');
                 
-                // Try to fetch trending products
-                let trendingData = { results: [] };
-                try {
-                    trendingData = await ProductService.getTrendingProducts(3);
-                    console.log('Trending products:', trendingData);
-                } catch (error) {
-                    console.warn('Trending products API failed, using fallback:', error);
-                    // Fallback: use regular products as trending
-                    try {
-                        const fallbackData = await ProductService.getAllProducts(1, 3);
-                        trendingData = { results: fallbackData.results?.slice(0, 3) || [] };
-                        console.log('Using fallback trending products:', trendingData);
-                    } catch (fallbackError) {
-                        console.error('Fallback trending products failed:', fallbackError);
-                    }
-                }
-
-                // Try to fetch best sellers
-                let bestSellersData = { results: [] };
-                try {
-                    bestSellersData = await ProductService.getBestSellersProducts(3);
-                    console.log('Best sellers products:', bestSellersData);
-                } catch (error) {
-                    console.warn('Best sellers API failed, using fallback:', error);
-                    // Fallback: use regular products as best sellers
-                    try {
-                        const fallbackData = await ProductService.getAllProducts(1, 3);
-                        bestSellersData = { results: fallbackData.results?.slice(0, 3) || [] };
-                        console.log('Using fallback best sellers products:', bestSellersData);
-                    } catch (fallbackError) {
-                        console.error('Fallback best sellers failed:', fallbackError);
-                    }
-                }
-
-                // Try to fetch featured products
-                let featuredData = { results: [] };
-                try {
-                    featuredData = await ProductService.getFeaturedProducts(3);
-                    console.log('Featured products:', featuredData);
-                } catch (error) {
-                    console.warn('Featured products API failed, using fallback:', error);
-                    // Fallback: use regular products as featured
-                    try {
-                        const fallbackData = await ProductService.getAllProducts(1, 3);
-                        featuredData = { results: fallbackData.results?.slice(0, 3) || [] };
-                        console.log('Using fallback featured products:', featuredData);
-                    } catch (fallbackError) {
-                        console.error('Fallback featured products failed:', fallbackError);
-                    }
-                }
+                // Test products API call
+                const productsResponse = await ProductService.getAllProducts();
+                console.log('Products API response:', productsResponse);
                 
-                // Fetch images for trending, best sellers, and featured products
-                const [trendingWithImages, bestSellersWithImages, featuredWithImages] = await Promise.all([
-                    Promise.all((trendingData.results || []).map(fetchProductWithImages)),
-                    Promise.all((bestSellersData.results || []).map(fetchProductWithImages)),
-                    Promise.all((featuredData.results || []).map(fetchProductWithImages))
-                ]);
+                // Set empty arrays for other products (not testing yet)
+                setTrendingProducts([]);
+                setBestSellersProducts([]);
+                setFeaturedProducts([]);
                 
-                setTrendingProducts(trendingWithImages);
-                setBestSellersProducts(bestSellersWithImages);
-                setFeaturedProducts(featuredWithImages);
-                
-                console.log('Final trending state:', trendingWithImages);
-                console.log('Final best sellers state:', bestSellersWithImages);
-                console.log('Final featured state:', featuredWithImages);
+                console.log('Products API test completed');
                 
                 setTrendLoading(false);
             } catch (err) {
-                console.error('Error fetching trending data:', err);
+                console.error('Error in products API test:', err);
                 // Use fallback data or empty arrays
                 setTrendingProducts([]);
                 setBestSellersProducts([]);

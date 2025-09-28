@@ -133,7 +133,7 @@ export const CartProvider = ({ children }) => {
     const initializeCart = async () => {
         try {
             dispatch({ type: CART_ACTIONS.SET_LOADING, payload: true });
-            const cart = await cartService.getOrCreateCart();
+            const cart = await cartService.getOrCreateUserCart();
             dispatch({ type: CART_ACTIONS.SET_CART_ID, payload: cart.id });
             
             const cartItems = await cartService.getCartItems(cart.id);

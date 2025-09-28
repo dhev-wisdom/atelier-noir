@@ -110,9 +110,10 @@ export const WishlistProvider = ({ children }) => {
     }
   };
 
-  // Fetch wishlist on auth change
+  // Fetch wishlist on auth change - TEMPORARILY DISABLED FOR API TESTING
   useEffect(() => {
-    fetchWishlist();
+    // fetchWishlist(); // Disabled during systematic API testing
+    console.log('Wishlist fetching temporarily disabled for API testing');
   }, [isAuthenticated]);
 
   const value = {

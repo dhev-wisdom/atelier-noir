@@ -44,19 +44,8 @@ const ProductDetail = () => {
             setLoading(true);
             setError(null);
             
-            // Fetch product details
+            // Fetch product details (images are now included in the response)
             const productData = await ProductService.getProductById(id);
-            
-            // Fetch product images
-            try {
-                const productImages = await ProductService.getProductImages(id);
-                productData.images = productImages;
-                productData.mainImage = await ProductService.getMainProductImage(id);
-            } catch (imageError) {
-                console.warn('Failed to fetch product images:', imageError);
-                productData.images = [];
-                productData.mainImage = null;
-            }
             
             setProduct(productData);
             

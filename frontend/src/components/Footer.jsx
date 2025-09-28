@@ -355,7 +355,7 @@ const Footer = () => {
                                 paddingTop: '20px',
                                 textAlign: 'center'
                             }}>
-                                <p style={{ 
+                                <div style={{ 
                                     color: '#666',
                                     fontSize: '14px',
                                     margin: 0,
@@ -404,7 +404,7 @@ const Footer = () => {
                                             Shipping Info
                                         </Link>
                                     </div>
-                                </p>
+                                </div>
                             </div>
                         </div>
                     </div>

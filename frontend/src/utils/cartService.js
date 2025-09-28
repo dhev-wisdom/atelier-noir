@@ -135,7 +135,11 @@ class CartService {
     async getOrCreateUserCart() {
         try {
             // First try to get existing carts
-            const carts = await this.getCarts();
+            const cartsResponse = await this.getCarts();
+            console.log('Carts API response:', cartsResponse);
+            
+            // Handle paginated response - extract results array
+            const carts = cartsResponse.results || cartsResponse || [];
             
             // Find an active cart or use the first one
             let activeCart = carts.find(cart => cart.status === 'active') || carts[0];

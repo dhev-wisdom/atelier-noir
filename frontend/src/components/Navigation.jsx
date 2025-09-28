@@ -21,7 +21,11 @@ const Navigation = () => {
     const fetchCategories = async () => {
         try {
             const categoriesData = await CategoryService.getAllCategories();
-            setCategories(categoriesData.slice(0, 6)); // Limit to 6 categories for navigation
+            console.log('Navigation categories API response:', categoriesData);
+            
+            // Handle paginated response - extract results array
+            const categories = categoriesData.results || categoriesData || [];
+            setCategories(categories.slice(0, 6)); // Limit to 6 categories for navigation
         } catch (error) {
             console.error('Error fetching categories:', error);
         }

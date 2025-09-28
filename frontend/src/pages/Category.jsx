@@ -32,20 +32,6 @@ const Category = () => {
     // SavedItems context
     const { addToSavedItems, removeFromSavedItems, isInSavedItems } = useSavedItems();
 
-    // Helper function to fetch product images
-    const fetchProductWithImages = async (product) => {
-        try {
-            const mainImage = await ProductService.getMainProductImage(product.id);
-            return {
-                ...product,
-                mainImage: mainImage?.image || null
-            };
-        } catch (error) {
-            console.warn(`Failed to fetch images for product ${product.id}:`, error);
-            return product;
-        }
-    };
-
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -63,23 +49,18 @@ const Category = () => {
                     setCurrentCategory(categoryResponse.data);
                     
                     // Fetch products by category
-                    const productsResponse = await ProductService.getProductsByCategory(id);
-                    productsData = productsResponse.data || [];
-                    
-                    document.title = `${categoryResponse.data?.name || 'Category'} | Atelier Noir`;
-                } else {
-                    // Fetch all products if no category specified
-                    const productsResponse = await ProductService.getAllProducts();
-                    productsData = productsResponse.data || [];
-                    document.title = "Shop All | Atelier Noir";
-                }
-
-                // Fetch images for each product
-                const productsWithImages = await Promise.all(
-                    productsData.map(fetchProductWithImages)
-                );
+                const productsResponse = await ProductService.getProductsByCategory(id);
+                productsData = productsResponse.data?.results || [];
                 
-                setProducts(productsWithImages);
+                document.title = `${categoryResponse.data?.name || 'Category'} | Atelier Noir`;
+            } else {
+                // Fetch all products if no category specified
+                const productsResponse = await ProductService.getAllProducts();
+                productsData = productsResponse.data?.results || [];
+                document.title = "Shop All | Atelier Noir";
+            }
+
+            setProducts(productsData);
             } catch (err) {
                 console.error('Error fetching data:', err);
                 setError('Failed to load products. Please try again.');
