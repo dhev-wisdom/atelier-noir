@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Avg
 from django.utils.timezone import now, timedelta
 from .models import Product, Category, ProductImage, Review
 from .serializers import ProductSerializer, CategorySerializer, ProductImageSerializer, ReviewSerializer
@@ -19,7 +19,9 @@ class ProductViewSet(viewsets.ModelViewSet):
     """
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAuthenticated]
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().annotate(
+        rating=Avg('reviews__rating')
+    )
     ordering_fields = ['rating', 'price', 'created_at']
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
     filterset_class = ProductFilter
