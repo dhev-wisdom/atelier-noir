@@ -7,7 +7,7 @@ from rest_framework import permissions, viewsets, views, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.decorators import permission_classes
-from .filters import ProductFilter
+# from .filters import ProductFilter
 # from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
@@ -26,7 +26,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     # ordering_fields = ['rating', 'price', 'created_at']
     # filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
     # filterset_class = ProductFilter
-    search_fields = ['name', 'description']
+    # search_fields = ['name', 'description']
 
     @action(detail=True, methods=['get'])
     def related(self, request, pk=None):
