@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
+import OrderService from '../utils/orderService';
 
 const Checkout = () => {
+    const navigate = useNavigate();
+    const { cartItems, getCartTotal, clearCart } = useCart();
+    
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -13,26 +18,27 @@ const Checkout = () => {
         zipCode: '',
         phone: '',
         email: '',
-        password: '',
         orderNotes: '',
         createAccount: false,
         noteAboutOrder: false,
-        checkPayment: true,
-        paypal: false
+        paymentMethod: 'card'
     });
 
-    // Sample order items
-    const orderItems = [
-        { id: 1, name: "Chain buck bag", price: 300.0 },
-        { id: 2, name: "Zip-pockets pebbled tote briefcase", price: 170.0 },
-        { id: 3, name: "Black jean", price: 170.0 },
-        { id: 4, name: "Cotton shirt", price: 110.0 }
-    ];
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [couponCode, setCouponCode] = useState('');
+    const [couponDiscount, setCouponDiscount] = useState(0);
+    const [showCouponForm, setShowCouponForm] = useState(false);
 
     useEffect(() => {
-        document.title = "Checkout | Ashion";
+        document.title = "Checkout | Atelier Noir";
         window.scrollTo(0, 0);
-    }, []);
+        
+        // Redirect to cart if no items
+        if (cartItems.length === 0) {
+            navigate('/cart');
+        }
+    }, [cartItems, navigate]);
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -42,19 +48,98 @@ const Checkout = () => {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleCouponSubmit = async (e) => {
         e.preventDefault();
-        // In a real app, you would process the checkout here
-        console.log('Form submitted:', formData);
-        // Redirect to confirmation page or process payment
+        if (!couponCode.trim()) return;
+        
+        try {
+            // In a real app, you would validate the coupon with the backend
+            // For now, we'll simulate a 10% discount for demo purposes
+            if (couponCode.toLowerCase() === 'save10') {
+                setCouponDiscount(0.1);
+                setError('');
+            } else {
+                setError('Invalid coupon code');
+                setCouponDiscount(0);
+            }
+        } catch (error) {
+            setError('Error applying coupon');
+            setCouponDiscount(0);
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        try {
+            // Prepare shipping address
+            const shippingAddress = {
+                first_name: formData.firstName,
+                last_name: formData.lastName,
+                address: formData.address,
+                address_optional: formData.addressOptional,
+                city: formData.city,
+                state: formData.state,
+                zip_code: formData.zipCode,
+                country: formData.country,
+                phone: formData.phone,
+                email: formData.email
+            };
+
+            // Prepare order data
+            const orderData = {
+                items: cartItems.map(item => ({
+                    product_id: item.id,
+                    quantity: item.quantity,
+                    size: item.size,
+                    color: item.color,
+                    price: item.price
+                })),
+                shipping_address: shippingAddress,
+                payment_method: formData.paymentMethod,
+                order_notes: formData.orderNotes,
+                coupon_code: couponCode || null,
+                subtotal: getCartTotal(),
+                discount: couponDiscount * getCartTotal(),
+                total: getCartTotal() * (1 - couponDiscount)
+            };
+
+            // Create the order
+            const order = await OrderService.createOrder(orderData);
+            
+            // Clear the cart after successful order
+            clearCart();
+            
+            // Redirect to order confirmation page
+            navigate(`/order-confirmation/${order.id}`, { 
+                state: { order, orderData } 
+            });
+
+        } catch (error) {
+            console.error('Error creating order:', error);
+            setError('Failed to create order. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const calculateSubtotal = () => {
-        return orderItems.reduce((total, item) => total + item.price, 0);
+        return getCartTotal();
+    };
+
+    const calculateDiscount = () => {
+        return couponDiscount * getCartTotal();
+    };
+
+    const calculateTotal = () => {
+        return getCartTotal() * (1 - couponDiscount);
     };
 
     const subtotal = calculateSubtotal();
-    const total = subtotal; // In a real app, you might add shipping, tax, etc.
+    const discount = calculateDiscount();
+    const total = calculateTotal();
 
     return (
         <>
@@ -79,9 +164,45 @@ const Checkout = () => {
                     <div className="row">
                         <div className="col-lg-12">
                             <h6 className="coupon__link">
-                                <span className="icon_tag_alt"></span> <a href="#">Have a coupon?</a> Click
-                                here to enter your code.
+                                <span className="icon_tag_alt"></span> 
+                                <a href="#" onClick={(e) => {
+                                    e.preventDefault();
+                                    setShowCouponForm(!showCouponForm);
+                                }}>
+                                    Have a coupon?
+                                </a> Click here to enter your code.
                             </h6>
+                            {showCouponForm && (
+                                <div className="coupon__form">
+                                    <form onSubmit={handleCouponSubmit}>
+                                        <div className="row">
+                                            <div className="col-lg-6">
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Coupon code"
+                                                    value={couponCode}
+                                                    onChange={(e) => setCouponCode(e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="col-lg-6">
+                                                <button type="submit" className="site-btn">Apply Coupon</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                    {couponDiscount > 0 && (
+                                        <div className="coupon__success">
+                                            <p style={{color: 'green', marginTop: '10px'}}>
+                                                Coupon applied! You saved ${discount.toFixed(2)}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {error && (
+                                <div className="alert alert-danger" style={{marginTop: '10px'}}>
+                                    {error}
+                                </div>
+                            )}
                         </div>
                     </div>
                     <form onSubmit={handleSubmit} className="checkout__form">
@@ -261,28 +382,35 @@ const Checkout = () => {
                                                 <span className="top__text">Product</span>
                                                 <span className="top__text__right">Total</span>
                                             </li>
-                                            {orderItems.map((item, index) => (
-                                                <li key={item.id}>
-                                                    {`${(index + 1).toString().padStart(2, '0')}. ${item.name}`} 
-                                                    <span>$ {item.price.toFixed(1)}</span>
+                                            {cartItems.map((item, index) => (
+                                                <li key={`${item.id}-${item.size}-${item.color}`}>
+                                                    {`${(index + 1).toString().padStart(2, '0')}. ${item.name}`}
+                                                    {item.size && <span className="product-variant"> - Size: {item.size}</span>}
+                                                    {item.color && <span className="product-variant"> - Color: {item.color}</span>}
+                                                    <span className="product-quantity"> x{item.quantity}</span>
+                                                    <span>$ {(item.price * item.quantity).toFixed(2)}</span>
                                                 </li>
                                             ))}
                                         </ul>
                                     </div>
                                     <div className="checkout__order__total">
                                         <ul>
-                                            <li>Subtotal <span>$ {subtotal.toFixed(1)}</span></li>
-                                            <li>Total <span>$ {total.toFixed(1)}</span></li>
+                                            <li>Subtotal <span>$ {subtotal.toFixed(2)}</span></li>
+                                            {couponDiscount > 0 && (
+                                                <li>Discount <span style={{color: 'green'}}>- $ {discount.toFixed(2)}</span></li>
+                                            )}
+                                            <li>Total <span>$ {total.toFixed(2)}</span></li>
                                         </ul>
                                     </div>
                                     <div className="checkout__order__widget">
-                                        <label htmlFor="check-payment">
-                                            Cheque payment
+                                        <label htmlFor="card-payment">
+                                            Credit/Debit Card
                                             <input 
-                                                type="checkbox" 
-                                                id="check-payment"
-                                                name="checkPayment"
-                                                checked={formData.checkPayment}
+                                                type="radio" 
+                                                id="card-payment"
+                                                name="paymentMethod"
+                                                value="card"
+                                                checked={formData.paymentMethod === 'card'}
                                                 onChange={handleInputChange}
                                             />
                                             <span className="checkmark"></span>
@@ -290,16 +418,35 @@ const Checkout = () => {
                                         <label htmlFor="paypal">
                                             PayPal
                                             <input 
-                                                type="checkbox" 
+                                                type="radio" 
                                                 id="paypal"
-                                                name="paypal"
-                                                checked={formData.paypal}
+                                                name="paymentMethod"
+                                                value="paypal"
+                                                checked={formData.paymentMethod === 'paypal'}
+                                                onChange={handleInputChange}
+                                            />
+                                            <span className="checkmark"></span>
+                                        </label>
+                                        <label htmlFor="bank-transfer">
+                                            Bank Transfer
+                                            <input 
+                                                type="radio" 
+                                                id="bank-transfer"
+                                                name="paymentMethod"
+                                                value="bank_transfer"
+                                                checked={formData.paymentMethod === 'bank_transfer'}
                                                 onChange={handleInputChange}
                                             />
                                             <span className="checkmark"></span>
                                         </label>
                                     </div>
-                                    <button type="submit" className="site-btn">Place order</button>
+                                    <button 
+                                        type="submit" 
+                                        className="site-btn"
+                                        disabled={loading || cartItems.length === 0}
+                                    >
+                                        {loading ? 'Processing...' : 'Place Order'}
+                                    </button>
                                 </div>
                             </div>
                         </div>

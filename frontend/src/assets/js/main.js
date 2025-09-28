@@ -1,6 +1,6 @@
-/*  ---------------------------------------------------
-Template Name: Ashion
-Description: Ashion ecommerce template
+/*  ---------------------------------------------------/*
+Template Name: Atelier Noir
+Description: Atelier Noir ecommerce template
 Author: Colorib
 Author URI: https://colorlib.com/
 Version: 1.0

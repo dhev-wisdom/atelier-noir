@@ -77,6 +77,9 @@ class ProductImageViewSet(viewsets.ModelViewSet):
     To upload an image, POST /api/product-images/
     In the body of the request, provide product (product ID), image (file) and is_main(boolean)
     """
+    def get_queryset(self):
+        return ProductImage.objects.filter(product_id=self.kwargs['product_pk'])
+    
     serializer_class = ProductImageSerializer
     permission_classes = [permissions.IsAuthenticated]
     queryset = ProductImage.objects.all()
@@ -97,6 +100,10 @@ class ReviewViewSet(viewsets.ModelViewSet):
     }
     `
     """
+
+    def get_queryset(self):
+        return Review.objects.filter(product_id=self.kwargs['product_pk'])
+    
     serializer_class = ReviewSerializer
     permission_classes = [permissions.IsAuthenticated]
     queryset = Review.objects.all()
