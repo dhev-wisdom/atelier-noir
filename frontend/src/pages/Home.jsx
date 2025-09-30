@@ -37,41 +37,54 @@ const Home = () => {
         const fetchMainData = async () => {
             try {
                 setLoading(true);
-                // TEMPORARILY TESTING ONLY CATEGORIES API
-                const categoriesData = await CategoryService.getAllCategories();
-                console.log('Categories API response:', categoriesData);
+                // Fetch both categories and products
+                const [categoriesData, productsData] = await Promise.all([
+                    CategoryService.getAllCategories(),
+                    ProductService.getAllProducts()
+                ]);
                 
-                setCategories(categoriesData.results || []);
-                // Temporarily set empty arrays for other data
-                setProducts([]);
+                console.log('Categories API response:', categoriesData);
+                console.log('Products API response:', productsData);
+                
+                setCategories(categoriesData.data?.results || categoriesData.results || []);
+                setProducts(productsData.data?.results || productsData.results || []);
                 setLoading(false);
             } catch (err) {
-                console.error('Error fetching categories:', err);
-                setError('Failed to load categories. Please try again later.');
+                console.error('Error fetching main data:', err);
+                setError('Failed to load products and categories. Please try again later.');
                 setLoading(false);
             }
         };
 
-        // TEST PRODUCTS API CALL
+        // FETCH ALL TRENDING DATA (ALL APIS RE-ENABLED)
         const fetchTrendingData = async () => {
             try {
                 setTrendLoading(true);
-                console.log('Testing products API call...');
+                console.log('Fetching all trending data...');
                 
-                // Test products API call
-                const productsResponse = await ProductService.getAllProducts();
-                console.log('Products API response:', productsResponse);
+                // Fetch trending products
+                const trendingResponse = await ProductService.getTrendingProducts();
+                console.log('Trending products API response:', trendingResponse);
+                const trendingData = trendingResponse?.data?.results || trendingResponse?.data || [];
+                setTrendingProducts(trendingData);
                 
-                // Set empty arrays for other products (not testing yet)
-                setTrendingProducts([]);
-                setBestSellersProducts([]);
-                setFeaturedProducts([]);
+                // Fetch best sellers
+                const bestSellersResponse = await ProductService.getBestSellersProducts();
+                console.log('Best sellers API response:', bestSellersResponse);
+                const bestSellersData = bestSellersResponse?.data?.results || bestSellersResponse?.data || [];
+                setBestSellersProducts(bestSellersData);
                 
-                console.log('Products API test completed');
+                // Fetch featured products
+                const featuredResponse = await ProductService.getFeaturedProducts();
+                console.log('Featured products API response:', featuredResponse);
+                const featuredData = featuredResponse?.data?.results || featuredResponse?.data || [];
+                setFeaturedProducts(featuredData);
+                
+                console.log('All trending data fetched successfully');
                 
                 setTrendLoading(false);
             } catch (err) {
-                console.error('Error in products API test:', err);
+                console.error('Error fetching trending data:', err);
                 // Use fallback data or empty arrays
                 setTrendingProducts([]);
                 setBestSellersProducts([]);

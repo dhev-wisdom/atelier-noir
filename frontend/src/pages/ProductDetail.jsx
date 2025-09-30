@@ -45,7 +45,8 @@ const ProductDetail = () => {
             setError(null);
             
             // Fetch product details (images are now included in the response)
-            const productData = await ProductService.getProductById(id);
+            const productResponse = await ProductService.getProductById(id);
+            const productData = productResponse.data || productResponse;
             
             setProduct(productData);
             
@@ -55,12 +56,14 @@ const ProductDetail = () => {
             // Fetch category details if product has category
             if (productData.category) {
                 try {
-                    const categoryData = await CategoryService.getCategoryById(productData.category);
+                    const categoryResponse = await CategoryService.getCategoryById(productData.category);
+                    const categoryData = categoryResponse.data || categoryResponse;
                     setCategory(categoryData);
                     
                     // Fetch related products from same category
-                    const relatedData = await ProductService.getProductsByCategory(productData.category, 1, 4);
-                    setRelatedProducts(relatedData.results?.filter(p => p.id !== parseInt(id)) || []);
+                    const relatedResponse = await ProductService.getProductsByCategory(productData.category, 1, 4);
+                    const relatedData = relatedResponse.data?.results || relatedResponse.results || [];
+                    setRelatedProducts(relatedData.filter(p => p.id !== parseInt(id)) || []);
                 } catch (categoryError) {
                     console.warn('Failed to fetch category details:', categoryError);
                 }
@@ -81,8 +84,9 @@ const ProductDetail = () => {
         try {
             setReviewsLoading(true);
             // Use the new reviews endpoint
-            const reviewsData = await ProductService.getProductReviews(id);
-            setReviews(reviewsData || []);
+            const reviewsResponse = await ProductService.getProductReviews(id);
+            const reviewsData = reviewsResponse.data?.results || reviewsResponse.data || reviewsResponse || [];
+            setReviews(reviewsData);
         } catch (err) {
             console.warn('Failed to fetch reviews:', err);
             setReviews([]);

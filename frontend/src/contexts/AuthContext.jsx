@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useMemo } from 'react';
 import AuthService from '../utils/authService';
 
 // Create context
@@ -55,16 +55,16 @@ export const AuthProvider = ({ children }) => {
     setCurrentUser(null);
   };
 
-  // Context value
-  const value = {
+  // Memoize the context value to prevent unnecessary re-renders
+  const value = useMemo(() => ({
     currentUser,
     loading,
     error,
     login,
     register,
     logout,
-    isAuthenticated: AuthService.isAuthenticated()
-  };
+    isAuthenticated: !!currentUser && AuthService.isAuthenticated()
+  }), [currentUser, loading, error]);
 
   return (
     <AuthContext.Provider value={value}>

@@ -6,18 +6,18 @@ class CartService {
     async getCarts() {
         try {
             const response = await api.get('/carts/');
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error fetching carts:', error);
             throw error;
         }
     }
 
-    // Create a new cart (empty body defaults to authenticated user)
-    async createCart(userData = {}) {
+    // Create a new cart
+    async createCart(cartData = {}) {
         try {
-            const response = await api.post('/carts/', userData);
-            return response.data;
+            const response = await api.post('/carts/', cartData);
+            return response;
         } catch (error) {
             console.error('Error creating cart:', error);
             throw error;
@@ -28,7 +28,7 @@ class CartService {
     async getCart(cartId) {
         try {
             const response = await api.get(`/carts/${cartId}/`);
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error fetching cart:', error);
             throw error;
@@ -39,7 +39,7 @@ class CartService {
     async updateCart(cartId, cartData) {
         try {
             const response = await api.put(`/carts/${cartId}/`, cartData);
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error updating cart:', error);
             throw error;
@@ -50,7 +50,7 @@ class CartService {
     async deleteCart(cartId) {
         try {
             const response = await api.delete(`/carts/${cartId}/`);
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error deleting cart:', error);
             throw error;
@@ -61,20 +61,20 @@ class CartService {
     async getCartItems(cartId) {
         try {
             const response = await api.get(`/carts/${cartId}/items/`);
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error fetching cart items:', error);
             throw error;
         }
     }
 
-    // Add item to cart
-    async addItemToCart(cartId, itemData) {
+    // Add item to a specific cart
+    async addCartItem(cartId, itemData) {
         try {
             const response = await api.post(`/carts/${cartId}/items/`, itemData);
-            return response.data;
+            return response;
         } catch (error) {
-            console.error('Error adding item to cart:', error);
+            console.error('Error adding cart item:', error);
             throw error;
         }
     }
@@ -83,7 +83,7 @@ class CartService {
     async getCartItem(cartId, itemId) {
         try {
             const response = await api.get(`/carts/${cartId}/items/${itemId}/`);
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error fetching cart item:', error);
             throw error;
@@ -94,39 +94,42 @@ class CartService {
     async updateCartItem(cartId, itemId, itemData) {
         try {
             const response = await api.put(`/carts/${cartId}/items/${itemId}/`, itemData);
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error updating cart item:', error);
             throw error;
         }
     }
 
-    // Remove a specific cart item
-    async removeCartItem(cartId, itemId) {
+    // Delete a specific cart item
+    async deleteCartItem(cartId, itemId) {
         try {
             const response = await api.delete(`/carts/${cartId}/items/${itemId}/`);
-            return response.data;
+            return response;
         } catch (error) {
-            console.error('Error removing cart item:', error);
+            console.error('Error deleting cart item:', error);
             throw error;
         }
     }
 
-    // Clear all items from cart
+    // Clear all items from a cart
     async clearCart(cartId) {
         try {
-            // Get all items first
-            const items = await this.getCartItems(cartId);
-            
-            // Remove each item
-            const deletePromises = items.map(item => 
-                this.removeCartItem(cartId, item.id)
-            );
-            
-            await Promise.all(deletePromises);
-            return { success: true, message: 'Cart cleared successfully' };
+            const response = await api.delete(`/carts/${cartId}/clear/`);
+            return response;
         } catch (error) {
             console.error('Error clearing cart:', error);
+            throw error;
+        }
+    }
+
+    // Get cart totals
+    async getCartTotals(cartId) {
+        try {
+            const response = await api.get(`/carts/${cartId}/totals/`);
+            return response;
+        } catch (error) {
+            console.error('Error fetching cart totals:', error);
             throw error;
         }
     }
@@ -138,8 +141,8 @@ class CartService {
             const cartsResponse = await this.getCarts();
             console.log('Carts API response:', cartsResponse);
             
-            // Handle paginated response - extract results array
-            const carts = cartsResponse.results || cartsResponse || [];
+            // Handle paginated response - extract results array from response.data
+            const carts = cartsResponse.data?.results || cartsResponse.data || [];
             
             // Find an active cart or use the first one
             let activeCart = carts.find(cart => cart.status === 'active') || carts[0];

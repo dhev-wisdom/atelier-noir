@@ -107,14 +107,14 @@ const Checkout = () => {
             };
 
             // Create the order
-            const order = await OrderService.createOrder(orderData);
+            const orderResponse = await OrderService.createOrder(orderData);
             
             // Clear the cart after successful order
             clearCart();
             
             // Redirect to order confirmation page
-            navigate(`/order-confirmation/${order.id}`, { 
-                state: { order, orderData } 
+            navigate(`/order-confirmation/${orderResponse.id}`, { 
+                state: { order: orderResponse, orderData } 
             });
 
         } catch (error) {

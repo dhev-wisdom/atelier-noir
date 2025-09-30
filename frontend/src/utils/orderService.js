@@ -5,7 +5,7 @@ const OrderService = {
     createOrder: async (orderData) => {
         try {
             const response = await api.post('/orders/', orderData);
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error creating order:', error);
             throw error;
@@ -16,7 +16,7 @@ const OrderService = {
     getUserOrders: async () => {
         try {
             const response = await api.get('/orders/');
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error fetching user orders:', error);
             throw error;
@@ -27,7 +27,7 @@ const OrderService = {
     getOrderById: async (orderId) => {
         try {
             const response = await api.get(`/orders/${orderId}/`);
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error fetching order:', error);
             throw error;
@@ -38,7 +38,7 @@ const OrderService = {
     updateOrderStatus: async (orderId, status) => {
         try {
             const response = await api.patch(`/orders/${orderId}/`, { status });
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error updating order status:', error);
             throw error;
@@ -49,7 +49,7 @@ const OrderService = {
     cancelOrder: async (orderId) => {
         try {
             const response = await api.patch(`/orders/${orderId}/`, { status: 'cancelled' });
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error cancelling order:', error);
             throw error;
@@ -60,7 +60,7 @@ const OrderService = {
     getOrderItems: async (orderId) => {
         try {
             const response = await api.get(`/orders/${orderId}/items/`);
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error fetching order items:', error);
             throw error;
@@ -77,7 +77,7 @@ const OrderService = {
                 coupon_code: couponCode
             };
             const response = await api.post('/orders/from-cart/', orderData);
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error creating order from cart:', error);
             throw error;
@@ -88,7 +88,7 @@ const OrderService = {
     processPayment: async (orderId, paymentData) => {
         try {
             const response = await api.post(`/orders/${orderId}/payment/`, paymentData);
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error processing payment:', error);
             throw error;
@@ -99,7 +99,7 @@ const OrderService = {
     getOrderTracking: async (orderId) => {
         try {
             const response = await api.get(`/orders/${orderId}/tracking/`);
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error fetching order tracking:', error);
             throw error;
@@ -114,7 +114,7 @@ const OrderService = {
                 shipping_address: shippingAddress,
                 coupon_code: couponCode
             });
-            return response.data;
+            return response;
         } catch (error) {
             console.error('Error calculating order totals:', error);
             throw error;

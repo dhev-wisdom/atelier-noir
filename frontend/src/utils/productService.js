@@ -6,7 +6,7 @@ const ProductService = {
     try {
       const response = await api.get(`/products/?page=${page}&limit=${limit}`);
       console.log("From productservice getALlProducts: ", response);
-      return response.data;
+      return response;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch products' };
     }
@@ -16,7 +16,7 @@ const ProductService = {
   getFeaturedProducts: async (limit = 10) => {
     try {
       const response = await api.get(`/products/?ordering=-rating&limit=${limit}`);
-      return response.data;
+      return response;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch featured products' };
     }
@@ -26,7 +26,7 @@ const ProductService = {
   getTrendingProducts: async (limit = 8) => {
     try {
       const response = await api.get(`/products/trending/?limit=${limit}`);
-      return response.data;
+      return response;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch trending products' };
     }
@@ -36,7 +36,7 @@ const ProductService = {
   getBestSellersProducts: async (limit = 8) => {
     try {
       const response = await api.get(`/products/best-sellers/?limit=${limit}`);
-      return response.data;
+      return response;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch best-selling products' };
     }
@@ -46,7 +46,7 @@ const ProductService = {
   getProductById: async (id) => {
     try {
       const response = await api.get(`/products/${id}/`);
-      return response.data;
+      return response;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch product details' };
     }
@@ -56,7 +56,7 @@ const ProductService = {
   getProductsByCategory: async (categoryId, page = 1, limit = 10) => {
     try {
       const response = await api.get(`/products/?category=${categoryId}&page=${page}&limit=${limit}`);
-      return response.data;
+      return response;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch products by category' };
     }
@@ -66,7 +66,7 @@ const ProductService = {
   searchProducts: async (query, page = 1, limit = 10) => {
     try {
       const response = await api.get(`/products/?search=${query}&page=${page}&limit=${limit}`);
-      return response.data;
+      return response;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to search products' };
     }
@@ -76,7 +76,7 @@ const ProductService = {
   getProductReviews: async (productId) => {
     try {
       const response = await api.get(`/products/${productId}/reviews/`);
-      return response.data;
+      return response;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch product reviews' };
     }
@@ -86,7 +86,7 @@ const ProductService = {
   addProductReview: async (productId, reviewData) => {
     try {
       const response = await api.post(`/products/${productId}/reviews/`, reviewData);
-      return response.data;
+      return response;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to add review' };
     }
@@ -96,7 +96,7 @@ const ProductService = {
   getProductImages: async (productId) => {
     try {
       const response = await api.get(`/products/${productId}/images/`);
-      return response.data;
+      return response;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch product images' };
     }

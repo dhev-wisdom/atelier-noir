@@ -40,25 +40,26 @@ const Category = () => {
 
                 // Fetch all categories for sidebar
                 const categoriesResponse = await CategoryService.getAllCategories();
-                setCategories(categoriesResponse.data || []);
+                setCategories(categoriesResponse.data?.results || categoriesResponse.results || []);
 
                 let productsData = [];
                 // If category ID is provided, fetch category details and products
                 if (id) {
                     const categoryResponse = await CategoryService.getCategoryById(id);
-                    setCurrentCategory(categoryResponse.data);
+                    const categoryData = categoryResponse.data || categoryResponse;
+                    setCurrentCategory(categoryData);
                     
                     // Fetch products by category
-                const productsResponse = await ProductService.getProductsByCategory(id);
-                productsData = productsResponse.data?.results || [];
-                
-                document.title = `${categoryResponse.data?.name || 'Category'} | Atelier Noir`;
-            } else {
-                // Fetch all products if no category specified
-                const productsResponse = await ProductService.getAllProducts();
-                productsData = productsResponse.data?.results || [];
-                document.title = "Shop All | Atelier Noir";
-            }
+                    const productsResponse = await ProductService.getProductsByCategory(id);
+                    productsData = productsResponse.data?.results || productsResponse.results || [];
+                    
+                    document.title = `${categoryData?.name || 'Category'} | Atelier Noir`;
+                } else {
+                    // Fetch all products if no category specified
+                    const productsResponse = await ProductService.getAllProducts();
+                    productsData = productsResponse.data?.results || productsResponse.results || [];
+                    document.title = "Shop All | Atelier Noir";
+                }
 
             setProducts(productsData);
             } catch (err) {

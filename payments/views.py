@@ -208,7 +208,7 @@ def verify_payment(request):
             
 
 
-            if hasattr(payment, "order") and payment.order:
+            if hasattr(payment, "order"):
                 payment.order.status = "paid"
                 payment.order.save()
             

@@ -28,7 +28,9 @@ export const WishlistProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      const items = await WishlistService.getUserWishlist();
+      const response = await WishlistService.getUserWishlist();
+      // Extract items from the API response structure
+      const items = response.data?.results || response.data || [];
       setWishlistItems(items);
     } catch (error) {
       console.error('Error fetching wishlist:', error);
@@ -110,10 +112,9 @@ export const WishlistProvider = ({ children }) => {
     }
   };
 
-  // Fetch wishlist on auth change - TEMPORARILY DISABLED FOR API TESTING
+  // Fetch wishlist on auth change
   useEffect(() => {
-    // fetchWishlist(); // Disabled during systematic API testing
-    console.log('Wishlist fetching temporarily disabled for API testing');
+    fetchWishlist();
   }, [isAuthenticated]);
 
   const value = {

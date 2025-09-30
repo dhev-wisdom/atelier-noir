@@ -4,8 +4,8 @@ class WishlistService {
   // Get user's wishlist items
   static async getUserWishlist() {
     try {
-      const response = await api.get('/wishlist');
-      return response.data;
+      const response = await api.get('/wishlists/');
+      return response;
     } catch (error) {
       console.error('Error fetching wishlist:', error);
       throw error;
@@ -15,12 +15,12 @@ class WishlistService {
   // Add item to wishlist
   static async addToWishlist(productId, size = null, color = null) {
     try {
-      const response = await api.post('/wishlist', {
+      const response = await api.post('/wishlists/', {
         product_id: productId,
         size,
         color
       });
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error adding to wishlist:', error);
       throw error;
@@ -30,23 +30,32 @@ class WishlistService {
   // Remove item from wishlist
   static async removeFromWishlist(wishlistItemId) {
     try {
-      const response = await api.delete(`/wishlist/${wishlistItemId}`);
-      return response.data;
+      const response = await api.delete(`/wishlists/${wishlistItemId}/`);
+      return response;
     } catch (error) {
       console.error('Error removing from wishlist:', error);
       throw error;
     }
   }
 
-  // Move item from wishlist to cart
-  static async moveToCart(wishlistItemId, quantity = 1) {
+  // Update wishlist item
+  static async updateWishlistItem(wishlistItemId, updateData) {
     try {
-      const response = await api.post(`/wishlist/${wishlistItemId}/move-to-cart`, {
-        quantity
-      });
-      return response.data;
+      const response = await api.patch(`/wishlists/${wishlistItemId}/`, updateData);
+      return response;
     } catch (error) {
-      console.error('Error moving to cart:', error);
+      console.error('Error updating wishlist item:', error);
+      throw error;
+    }
+  }
+
+  // Clear entire wishlist
+  static async clearWishlist() {
+    try {
+      const response = await api.delete('/wishlists/clear/');
+      return response;
+    } catch (error) {
+      console.error('Error clearing wishlist:', error);
       throw error;
     }
   }
@@ -54,39 +63,41 @@ class WishlistService {
   // Check if product is in wishlist
   static async isInWishlist(productId, size = null, color = null) {
     try {
-      const response = await api.get('/wishlist/check', {
+      const response = await api.get('/wishlists/check/', {
         params: {
           product_id: productId,
           size,
           color
         }
       });
-      return response.data.is_in_wishlist;
+      return response.is_in_wishlist;
     } catch (error) {
       console.error('Error checking wishlist:', error);
       return false;
     }
   }
 
-  // Clear entire wishlist
-  static async clearWishlist() {
+  // Move wishlist item to cart
+  static async moveToCart(wishlistItemId, quantity = 1) {
     try {
-      const response = await api.delete('/wishlist/clear');
-      return response.data;
+      const response = await api.post(`/wishlists/${wishlistItemId}/move-to-cart/`, {
+        quantity
+      });
+      return response;
     } catch (error) {
-      console.error('Error clearing wishlist:', error);
+      console.error('Error moving to cart:', error);
       throw error;
     }
   }
 
-  // Get wishlist item count
-  static async getWishlistCount() {
+  // Get wishlist item by ID
+  static async getWishlistItem(wishlistItemId) {
     try {
-      const response = await api.get('/wishlist/count');
-      return response.data.count;
+      const response = await api.get(`/wishlists/${wishlistItemId}/`);
+      return response;
     } catch (error) {
-      console.error('Error getting wishlist count:', error);
-      return 0;
+      console.error('Error fetching wishlist item:', error);
+      throw error;
     }
   }
 }

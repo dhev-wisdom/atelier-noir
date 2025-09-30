@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useMemo, useCallback } from 'react';
 import cartService from '../utils/cartService';
 
 const CartContext = createContext();
@@ -136,7 +136,9 @@ export const CartProvider = ({ children }) => {
             const cart = await cartService.getOrCreateUserCart();
             dispatch({ type: CART_ACTIONS.SET_CART_ID, payload: cart.id });
             
-            const cartItems = await cartService.getCartItems(cart.id);
+            const cartItemsResponse = await cartService.getCartItems(cart.id);
+            // Handle paginated response - extract the results array from the data property
+            const cartItems = cartItemsResponse.data?.results || cartItemsResponse.data || [];
             dispatch({ type: CART_ACTIONS.LOAD_CART, payload: cartItems });
         } catch (error) {
             console.error('Error initializing cart:', error);
@@ -145,7 +147,7 @@ export const CartProvider = ({ children }) => {
     };
 
     // Cart actions
-    const addToCart = async (product, quantity = 1, selectedColor = null, selectedSize = null) => {
+    const addToCart = useCallback(async (product, quantity = 1, selectedColor = null, selectedSize = null) => {
         try {
             dispatch({ type: CART_ACTIONS.SET_LOADING, payload: true });
             
@@ -175,9 +177,9 @@ export const CartProvider = ({ children }) => {
             console.error('Error adding to cart:', error);
             dispatch({ type: CART_ACTIONS.SET_ERROR, payload: 'Failed to add item to cart' });
         }
-    };
+    }, [state.cartId]);
 
-    const removeFromCart = async (itemId) => {
+    const removeFromCart = useCallback(async (itemId) => {
         try {
             dispatch({ type: CART_ACTIONS.SET_LOADING, payload: true });
             await cartService.removeFromCart(state.cartId, itemId);
@@ -187,9 +189,9 @@ export const CartProvider = ({ children }) => {
             console.error('Error removing from cart:', error);
             dispatch({ type: CART_ACTIONS.SET_ERROR, payload: 'Failed to remove item from cart' });
         }
-    };
+    }, [state.cartId]);
 
-    const updateQuantity = async (itemId, quantity) => {
+    const updateQuantity = useCallback(async (itemId, quantity) => {
         try {
             dispatch({ type: CART_ACTIONS.SET_LOADING, payload: true });
             const updatedItem = await cartService.updateCartItem(state.cartId, itemId, { quantity });
@@ -202,9 +204,9 @@ export const CartProvider = ({ children }) => {
             console.error('Error updating quantity:', error);
             dispatch({ type: CART_ACTIONS.SET_ERROR, payload: 'Failed to update item quantity' });
         }
-    };
+    }, [state.cartId]);
 
-    const clearCart = async () => {
+    const clearCart = useCallback(async () => {
         try {
             dispatch({ type: CART_ACTIONS.SET_LOADING, payload: true });
             await cartService.clearCart(state.cartId);
@@ -214,26 +216,36 @@ export const CartProvider = ({ children }) => {
             console.error('Error clearing cart:', error);
             dispatch({ type: CART_ACTIONS.SET_ERROR, payload: 'Failed to clear cart' });
         }
-    };
+    }, [state.cartId]);
 
-    const applyCoupon = (coupon) => {
+    const applyCoupon = useCallback((coupon) => {
         dispatch({ type: CART_ACTIONS.APPLY_COUPON, payload: coupon });
-    };
+    }, []);
 
-    const removeCoupon = () => {
+    const removeCoupon = useCallback(() => {
         dispatch({ type: CART_ACTIONS.REMOVE_COUPON });
-    };
+    }, []);
 
     // Cart calculations
-    const getCartItemsCount = () => {
+    const getCartItemsCount = useCallback(() => {
+        // Ensure state.items is an array before calling reduce
+        if (!Array.isArray(state.items)) {
+            console.warn('Cart items is not an array:', state.items);
+            return 0;
+        }
         return state.items.reduce((total, item) => total + item.quantity, 0);
-    };
+    }, [state.items]);
 
-    const getCartSubtotal = () => {
+    const getCartSubtotal = useCallback(() => {
+        // Ensure state.items is an array before calling reduce
+        if (!Array.isArray(state.items)) {
+            console.warn('Cart items is not an array:', state.items);
+            return 0;
+        }
         return state.items.reduce((total, item) => total + (item.price * item.quantity), 0);
-    };
+    }, [state.items]);
 
-    const getCouponDiscount = () => {
+    const getCouponDiscount = useCallback(() => {
         if (!state.coupon) return 0;
         const subtotal = getCartSubtotal();
         
@@ -243,36 +255,36 @@ export const CartProvider = ({ children }) => {
             return Math.min(state.coupon.value, subtotal);
         }
         return 0;
-    };
+    }, [state.coupon, getCartSubtotal]);
 
-    const getShippingCost = () => {
+    const getShippingCost = useCallback(() => {
         const subtotal = getCartSubtotal();
         return subtotal >= 100 ? 0 : 15; // Free shipping over $100
-    };
+    }, [getCartSubtotal]);
 
-    const getTax = () => {
+    const getTax = useCallback(() => {
         const subtotal = getCartSubtotal();
         const discount = getCouponDiscount();
         return (subtotal - discount) * 0.08; // 8% tax
-    };
+    }, [getCartSubtotal, getCouponDiscount]);
 
-    const getCartTotal = () => {
+    const getCartTotal = useCallback(() => {
         const subtotal = getCartSubtotal();
         const discount = getCouponDiscount();
         const shipping = getShippingCost();
         const tax = getTax();
         return subtotal - discount + shipping + tax;
-    };
+    }, [getCartSubtotal, getCouponDiscount, getShippingCost, getTax]);
 
-    const isInCart = (productId, selectedColor = null, selectedSize = null) => {
+    const isInCart = useCallback((productId, selectedColor = null, selectedSize = null) => {
         return state.items.some(item => 
             item.product_id === productId && 
             item.selectedColor === selectedColor &&
             item.selectedSize === selectedSize
         );
-    };
+    }, [state.items]);
 
-    const value = {
+    const value = useMemo(() => ({
         // State
         cartItems: state.items,
         coupon: state.coupon,
@@ -296,7 +308,26 @@ export const CartProvider = ({ children }) => {
         getTax,
         getCartTotal,
         isInCart
-    };
+    }), [
+        state.items,
+        state.coupon,
+        state.cartId,
+        state.loading,
+        state.error,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        applyCoupon,
+        removeCoupon,
+        getCartItemsCount,
+        getCartSubtotal,
+        getCouponDiscount,
+        getShippingCost,
+        getTax,
+        getCartTotal,
+        isInCart
+    ]);
 
     return (
         <CartContext.Provider value={value}>

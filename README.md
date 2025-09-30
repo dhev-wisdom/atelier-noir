@@ -248,4 +248,11 @@ For questions or issues:
 
 Open a GitHub issue
 
-Contact the maintainer: wisdomchinonsoagbo@gmail.com
+Contact the developer: wisdomchinonsoagbo@gmail.com
+
+Existing super user for testing:
+
+```
+email: admin@example.com
+password: StrongPassword123
+```

@@ -23,8 +23,8 @@ const Navigation = () => {
             const categoriesData = await CategoryService.getAllCategories();
             console.log('Navigation categories API response:', categoriesData);
             
-            // Handle paginated response - extract results array
-            const categories = categoriesData.results || categoriesData || [];
+            // Handle paginated response - extract results array from response.data
+            const categories = categoriesData.data?.results || categoriesData.data || [];
             setCategories(categories.slice(0, 6)); // Limit to 6 categories for navigation
         } catch (error) {
             console.error('Error fetching categories:', error);

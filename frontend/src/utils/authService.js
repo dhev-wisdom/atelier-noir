@@ -5,7 +5,7 @@ const AuthService = {
   register: async (userData) => {
     try {
       const response = await api.post('/register/', userData);
-      return response.data;
+      return response;
     } catch (error) {
       throw error.response?.data || { message: 'Registration failed' };
     }
@@ -15,12 +15,12 @@ const AuthService = {
   login: async (credentials) => {
     try {
       const response = await api.post('/login/', credentials);
-      if (response.data.access && response.data.refresh) {
-        localStorage.setItem('accessToken', response.data.access);
-        localStorage.setItem('refreshToken', response.data.refresh);
-        localStorage.setItem('user', JSON.stringify(response.data.user || {}));
+      if (response.access && response.refresh) {
+        localStorage.setItem('accessToken', response.access);
+        localStorage.setItem('refreshToken', response.refresh);
+        localStorage.setItem('user', JSON.stringify(response.user || {}));
       }
-      return response.data;
+      return response;
     } catch (error) {
       throw error.response?.data || { message: 'Login failed' };
     }
@@ -34,12 +34,12 @@ const AuthService = {
         password: 'StrongPassword123'
       };
       const response = await api.post('/login/', adminCredentials);
-      if (response.data.access && response.data.refresh) {
-        localStorage.setItem('accessToken', response.data.access);
-        localStorage.setItem('refreshToken', response.data.refresh);
-        localStorage.setItem('user', JSON.stringify(response.data.user || {}));
+      if (response.access && response.refresh) {
+        localStorage.setItem('accessToken', response.access);
+        localStorage.setItem('refreshToken', response.refresh);
+        localStorage.setItem('user', JSON.stringify(response.user || {}));
       }
-      return response.data;
+      return response;
     } catch (error) {
       throw error.response?.data || { message: 'Admin login failed' };
     }
@@ -70,7 +70,7 @@ const AuthService = {
   getUserProfile: async () => {
     try {
       const response = await api.get('/users/profile/');
-      return response.data;
+      return response;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch user profile' };
     }

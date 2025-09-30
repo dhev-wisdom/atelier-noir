@@ -5,7 +5,7 @@ const CategoryService = {
   getAllCategories: async () => {
     try {
       const response = await api.get('/categories/');
-      return response.data;
+      return response;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch categories' };
     }
@@ -15,7 +15,7 @@ const CategoryService = {
   getCategoryById: async (id) => {
     try {
       const response = await api.get(`/categories/${id}/`);
-      return response.data;
+      return response;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch category details' };
     }
@@ -25,7 +25,7 @@ const CategoryService = {
   getFeaturedCategories: async () => {
     try {
       const response = await api.get('/categories/?limit=5');
-      return response.data;
+      return response;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch featured categories' };
     }
